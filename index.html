@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gist Config Editor</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #1a1a18;
+    --paper: #f5f0e8;
+    --accent: #c84b2f;
+    --muted: #8a8478;
+    --border: #d4cfc4;
+  }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    padding: 2rem 1rem 4rem;
+  }
+
+  .container { width: 100%; max-width: 720px; margin: 0 auto; }
+
+  header { margin-bottom: 2rem; text-align: center; }
+
+  .eyebrow {
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.75rem;
+  }
+
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 1.9rem;
+    line-height: 1.1;
+  }
+
+  h1 em { font-style: italic; font-weight: 300; color: var(--accent); }
+
+  .subtitle { margin-top: 0.75rem; font-size: 0.75rem; color: var(--muted); line-height: 1.6; }
+
+  .card {
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 2px;
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+    box-shadow: 4px 4px 0 var(--border);
+  }
+
+  label {
+    display: block;
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.3rem;
+  }
+
+  input[type="text"], input[type="password"], textarea {
+    width: 100%;
+    padding: 0.55rem 0.7rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+    background: var(--paper);
+    border: 1.5px solid var(--border);
+    border-radius: 2px;
+    color: var(--ink);
+    outline: none;
+  }
+
+  input:focus, textarea:focus { border-color: var(--accent); }
+
+  .field-group { margin-bottom: 0.85rem; }
+
+  .entry-row {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-end;
+    margin-bottom: 0.6rem;
+  }
+
+  .entry-fields { flex: 1; display: grid; gap: 0.6rem; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+
+  .remove-btn {
+    padding: 0.55rem 0.7rem;
+    background: transparent;
+    border: 1.5px solid var(--border);
+    border-radius: 2px;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .remove-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .add-btn, .save-btn, .refresh-btn {
+    padding: 0.7rem 1rem;
+    border-radius: 2px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+  }
+
+  .add-btn {
+    width: 100%;
+    background: transparent;
+    border: 1.5px dashed var(--border);
+    color: var(--muted);
+    margin-top: 0.4rem;
+  }
+
+  .add-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .save-btn {
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    width: 100%;
+  }
+
+  .save-btn:hover { background: var(--accent); }
+  .save-btn:disabled { opacity: 0.5; cursor: default; }
+
+  #status { margin-top: 1rem; text-align: center; font-size: 0.8rem; color: var(--muted); min-height: 1.2em; }
+  #status.ok { color: var(--accent); }
+
+  .config-note {
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-align: center;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <p class="eyebrow">Gist Config Editor</p>
+    <h1>Edit the <em>config</em>,<br>no code touched.</h1>
+    <p class="subtitle">Generic form over a JSON-array Gist. Point it at any project's config via URL params.</p>
+  </header>
+
+  <div id="app"></div>
+</div>
+
+<script>
+  const params = new URLSearchParams(location.search);
+  const GIST_FETCH_URL = params.get('gist');   // raw fetch URL, current content
+  const GIST_ID = params.get('gistId');        // gist id, for writing back
+  const FILE = params.get('file');             // filename inside the gist
+  const RELAY_URL = params.get('relay');       // Pipedream relay webhook URL
+
+  const app = document.getElementById('app');
+
+  if (!GIST_FETCH_URL || !GIST_ID || !FILE || !RELAY_URL) {
+    app.innerHTML = `<div class="card">Missing one of the required URL params:
+      <code>gist</code>, <code>gistId</code>, <code>file</code>, <code>relay</code>.
+      Bookmark this page with all four set for the project you're editing.</div>`;
+  } else {
+    init();
+  }
+
+  async function init() {
+    app.innerHTML = `<p class="config-note">Editing <strong>${FILE}</strong></p>
+      <div id="entries"></div>
+      <button class="add-btn" id="addBtn">+ Add entry</button>
+      <div class="card">
+        <div class="field-group">
+          <label>Relay password</label>
+          <input type="password" id="password" />
+        </div>
+        <button class="save-btn" id="saveBtn">Save to Gist</button>
+        <p id="status"></p>
+      </div>`;
+
+    const entriesEl = document.getElementById('entries');
+    const res = await fetch(GIST_FETCH_URL, { cache: 'no-store' });
+    let data = await res.json();
+    if (!Array.isArray(data)) data = [];
+
+    const keys = Array.from(new Set(data.flatMap(o => Object.keys(o))));
+    if (keys.length === 0) keys.push('label', 'value');
+
+    function renderEntry(entry) {
+      const row = document.createElement('div');
+      row.className = 'card entry-row';
+      const fields = document.createElement('div');
+      fields.className = 'entry-fields';
+      keys.forEach(key => {
+        const group = document.createElement('div');
+        group.className = 'field-group';
+        const lbl = document.createElement('label');
+        lbl.textContent = key;
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.dataset.key = key;
+        input.value = entry[key] ?? '';
+        group.append(lbl, input);
+        fields.appendChild(group);
+      });
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'remove-btn';
+      removeBtn.textContent = '✕';
+      removeBtn.addEventListener('click', () => row.remove());
+      row.append(fields, removeBtn);
+      entriesEl.appendChild(row);
+    }
+
+    data.forEach(renderEntry);
+
+    document.getElementById('addBtn').addEventListener('click', () => renderEntry({}));
+
+    document.getElementById('saveBtn').addEventListener('click', async () => {
+      const statusEl = document.getElementById('status');
+      const password = document.getElementById('password').value;
+      const rows = Array.from(entriesEl.querySelectorAll('.entry-row'));
+      const content = rows.map(row => {
+        const obj = {};
+        row.querySelectorAll('input').forEach(input => {
+          if (input.value !== '') obj[input.dataset.key] = input.value;
+        });
+        return obj;
+      });
+
+      statusEl.classList.remove('ok');
+      statusEl.textContent = 'Saving…';
+      try {
+        const r = await fetch(RELAY_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password, gistId: GIST_ID, filename: FILE, content: JSON.stringify(content, null, 2) })
+        });
+        const body = await r.json().catch(() => ({}));
+        if (r.ok && !body.error) {
+          statusEl.textContent = 'Saved.';
+          statusEl.classList.add('ok');
+        } else {
+          statusEl.textContent = body.error || 'Save failed — check the password.';
+        }
+      } catch (err) {
+        statusEl.textContent = 'Save failed — network error.';
+      }
+    });
+  }
+</script>
+</body>
+</html>
