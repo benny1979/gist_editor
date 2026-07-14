@@ -88,7 +88,13 @@
     margin-bottom: 0.6rem;
   }
 
-  .entry-fields { flex: 1; display: grid; gap: 0.6rem; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+  .entry-fields { flex: 1; display: flex; flex-direction: column; gap: 0.6rem; }
+
+  .entry-fields textarea {
+    resize: vertical;
+    min-height: 2.4em;
+    font-family: 'DM Mono', monospace;
+  }
 
   .remove-btn {
     padding: 0.55rem 0.7rem;
@@ -216,8 +222,8 @@
         group.className = 'field-group';
         const lbl = document.createElement('label');
         lbl.textContent = key;
-        const input = document.createElement('input');
-        input.type = 'text';
+        const input = document.createElement('textarea');
+        input.rows = 2;
         input.dataset.key = key;
         input.value = entry[key] ?? '';
         group.append(lbl, input);
@@ -241,7 +247,7 @@
       const rows = Array.from(entriesEl.querySelectorAll('.entry-row'));
       const content = rows.map(row => {
         const obj = {};
-        row.querySelectorAll('input').forEach(input => {
+        row.querySelectorAll('textarea').forEach(input => {
           if (input.value !== '') obj[input.dataset.key] = input.value;
         });
         return obj;
