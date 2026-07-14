@@ -5,6 +5,17 @@ project uses as its live config (e.g. `qr_notify`'s `buttons.json`). Built once,
 reused across future projects of this shape by pointing it at a different Gist —
 no code changes needed per project.
 
+## Live setup (as of 2026-07-14)
+
+- Admin page: https://benny1979.github.io/gist_editor/
+- Pipedream relay workflow `gist-editor-relay` is deployed, holding
+  `GITHUB_TOKEN` (classic PAT, `gist` scope only) and `RELAY_PASSWORD` (saved
+  as a Bitwarden note), and already wired into `index.html` as `RELAY_URL`.
+- Bookmarked URL for `qr_notify`'s buttons:
+  `https://benny1979.github.io/gist_editor/?gist=https://gist.githubusercontent.com/benny1979/7c25da9fc398fa08f7e7f028797305b5/raw/buttons.json&gistId=7c25da9fc398fa08f7e7f028797305b5&file=buttons.json`
+- Adding a future project: create its Gist, then bookmark this same admin page
+  with that Gist's `gist`/`gistId`/`file` params — no changes needed here.
+
 ```
 Admin page (this repo, GitHub Pages)
   -> reads current content from a Gist's raw URL, renders one form row per array entry,
