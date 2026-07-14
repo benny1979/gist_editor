@@ -176,7 +176,7 @@
   }
 
   async function init() {
-    app.innerHTML = `<p class="config-note">Editing <strong>${FILE}</strong> in gist <code>${GIST_ID}</code><br>Check this matches the project you meant before saving.</p>
+    app.innerHTML = `<p class="config-note" id="configNote"></p>
       <div id="entries"></div>
       <button class="add-btn" id="addBtn">+ Add entry</button>
       <div class="card">
@@ -187,6 +187,16 @@
         <button class="save-btn" id="saveBtn">Save to Gist</button>
         <p id="status"></p>
       </div>`;
+
+    // built via textContent, not interpolated into the innerHTML above —
+    // FILE/GIST_ID come from the (attacker-controllable) URL query string.
+    const configNote = document.getElementById('configNote');
+    const fileEl = document.createElement('strong');
+    fileEl.textContent = FILE;
+    configNote.append('Editing ', fileEl, ' in gist ');
+    const gistIdEl = document.createElement('code');
+    gistIdEl.textContent = GIST_ID;
+    configNote.append(gistIdEl, document.createElement('br'), 'Check this matches the project you meant before saving.');
 
     const entriesEl = document.getElementById('entries');
     const res = await fetch(GIST_FETCH_URL, { cache: 'no-store' });
