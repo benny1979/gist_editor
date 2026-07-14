@@ -66,7 +66,11 @@ variables.
 ```javascript
 export default defineComponent({
   async run({ steps, $ }) {
-    const { password, gistId, filename, content } = steps.trigger.event.body;
+    const { password, gistId, filename, content } = steps.trigger.event.body || {};
+
+    if (!password || !gistId || !filename || content === undefined) {
+      return $.respond({ status: 400, body: { error: "Malformed request" } });
+    }
 
     if (password !== process.env.RELAY_PASSWORD) {
       return $.respond({ status: 401, body: { error: "Wrong password" } });
