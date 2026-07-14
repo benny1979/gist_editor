@@ -48,7 +48,7 @@ variables.
 ### 2. Pipedream relay workflow (shared across all projects using this tool)
 - New workflow, trigger = **HTTP / Webhook**. Copy its URL — this is `relay` above.
 - Set environment variables (Pipedream account Settings -> Environment Variables):
-  - `RELAY_PASSWORD` — a password you choose, typed into the admin page's password field.
+  - `RELAY_PASSWORD` — a password you choose, typed into the admin page's password field. Saved as a note in Bitwarden.
   - `GITHUB_TOKEN` — the token from step 1.
 - Add a **Node.js** code step:
 
