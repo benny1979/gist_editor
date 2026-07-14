@@ -156,24 +156,27 @@
 </div>
 
 <script>
+  // ponytail: hardcoded, not a URL param — a param here would let a crafted
+  // link redirect the typed password to an attacker's endpoint instead.
+  const RELAY_URL = 'PASTE_RELAY_WEBHOOK_URL_HERE';
+
   const params = new URLSearchParams(location.search);
   const GIST_FETCH_URL = params.get('gist');   // raw fetch URL, current content
   const GIST_ID = params.get('gistId');        // gist id, for writing back
   const FILE = params.get('file');             // filename inside the gist
-  const RELAY_URL = params.get('relay');       // Pipedream relay webhook URL
 
   const app = document.getElementById('app');
 
-  if (!GIST_FETCH_URL || !GIST_ID || !FILE || !RELAY_URL) {
+  if (!GIST_FETCH_URL || !GIST_ID || !FILE) {
     app.innerHTML = `<div class="card">Missing one of the required URL params:
-      <code>gist</code>, <code>gistId</code>, <code>file</code>, <code>relay</code>.
-      Bookmark this page with all four set for the project you're editing.</div>`;
+      <code>gist</code>, <code>gistId</code>, <code>file</code>.
+      Bookmark this page with all three set for the project you're editing.</div>`;
   } else {
     init();
   }
 
   async function init() {
-    app.innerHTML = `<p class="config-note">Editing <strong>${FILE}</strong></p>
+    app.innerHTML = `<p class="config-note">Editing <strong>${FILE}</strong> in gist <code>${GIST_ID}</code><br>Check this matches the project you meant before saving.</p>
       <div id="entries"></div>
       <button class="add-btn" id="addBtn">+ Add entry</button>
       <div class="card">
