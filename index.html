@@ -222,6 +222,14 @@
     const shortKeys = keys.filter(k => maxLen(k) <= 20);
     const longKeys = keys.filter(k => maxLen(k) > 20);
 
+    // ponytail: friendlier labels for well-known keys, raw key name for
+    // anything else — keeps this generic for future projects' own fields.
+    const FRIENDLY_LABELS = {
+      title: 'Pushover notification title',
+      message: 'Pushover notification message',
+      reply: 'Shown to visitor after tapping',
+    };
+
     function renderEntry(entry) {
       const row = document.createElement('div');
       row.className = 'card entry-row';
@@ -232,7 +240,7 @@
         const group = document.createElement('div');
         group.className = 'field-group';
         const lbl = document.createElement('label');
-        lbl.textContent = key;
+        lbl.textContent = FRIENDLY_LABELS[key] || key;
         const input = document.createElement('textarea');
         input.rows = 2;
         input.dataset.key = key;
