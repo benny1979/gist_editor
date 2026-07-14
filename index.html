@@ -90,6 +90,9 @@
 
   .entry-fields { flex: 1; display: flex; flex-direction: column; gap: 0.6rem; }
 
+  .short-fields-row { display: flex; gap: 0.6rem; }
+  .short-fields-row .field-group { flex: 1; min-width: 90px; }
+
   .entry-fields textarea {
     resize: vertical;
     min-height: 2.4em;
@@ -212,12 +215,20 @@
     const keys = Array.from(new Set(data.flatMap(o => Object.keys(o))));
     if (keys.length === 0) keys.push('label', 'value');
 
+    // ponytail: grouped by observed value length, not by field name — keeps
+    // this generic across projects while still avoiding a wall of full-width
+    // rows for short fields like a label or an emoji.
+    const maxLen = key => Math.max(0, ...data.map(o => String(o[key] ?? '').length));
+    const shortKeys = keys.filter(k => maxLen(k) <= 20);
+    const longKeys = keys.filter(k => maxLen(k) > 20);
+
     function renderEntry(entry) {
       const row = document.createElement('div');
       row.className = 'card entry-row';
       const fields = document.createElement('div');
       fields.className = 'entry-fields';
-      keys.forEach(key => {
+
+      function addField(key) {
         const group = document.createElement('div');
         group.className = 'field-group';
         const lbl = document.createElement('label');
@@ -227,8 +238,16 @@
         input.dataset.key = key;
         input.value = entry[key] ?? '';
         group.append(lbl, input);
-        fields.appendChild(group);
-      });
+        return group;
+      }
+
+      if (shortKeys.length) {
+        const shortRow = document.createElement('div');
+        shortRow.className = 'short-fields-row';
+        shortKeys.forEach(key => shortRow.appendChild(addField(key)));
+        fields.appendChild(shortRow);
+      }
+      longKeys.forEach(key => fields.appendChild(addField(key)));
       const removeBtn = document.createElement('button');
       removeBtn.className = 'remove-btn';
       removeBtn.textContent = '✕';
